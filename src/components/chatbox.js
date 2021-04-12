@@ -4,26 +4,14 @@ import Peer from 'peerjs'
 export default class ChatBox extends React.Component {
     constructor(props) {
         super(props)
-        var messages = [
-            {
-                "text": "Hi sweetheart!",
-                "user": {
-                    "profile_picture": "https://source.unsplash.com/vpOeXr5wmR4/600x600",
-                },
-                "self": true
-            },
-            {
-                "text": "Hello dear",
-                "user": {
-                    "profile_picture": "https://source.unsplash.com/otT2199XwI8/600x600",
-                },
-                "self": false
-            }
-        ]
+
+        var messages = this.getMessageHistory(props.peerId)
+
+
         this.peer = null
         this.connection = null
         this.state = {
-            peerId: 'N/A',
+            peerId: props.peerId ? props.peerId : 'N/A',
             messages: messages
         }
 
@@ -32,6 +20,10 @@ export default class ChatBox extends React.Component {
         this.onKeyPressSendMessageBox = this.onKeyPressSendMessageBox.bind(this)
         this.receiveConnection = this.receiveConnection.bind(this)
         this.receiveMessage = this.receiveMessage.bind(this)
+    }
+
+    getMessageHistory(peerId) {
+        return []
     }
 
     onKeyPressPeerBox(e) {
@@ -92,6 +84,7 @@ export default class ChatBox extends React.Component {
 
     connectPeer(peerId) {
         var conn = this.peer.connect(peerId)
+        conn.on('error', (error) => { alert(error.type) })
         conn.on('open', () => {
             this.connection = conn
             conn.on('data', this.receiveMessage)
@@ -119,10 +112,15 @@ export default class ChatBox extends React.Component {
                                 <span className="font-semibold flex-col text-2xl">Let's Chat</span>
                             </div>
                             <div className="flex w-5/6 justify-end">
-                                <span className="text-gray-400 italic py-1">Your Id: {this.state.peerId}</span>
-                                <span className="text-gray-400 italic py-1 ml-3">Connected to:</span>
-                                <input className="ml-1 p-1 border" placeholder="Peer's Id" id="peer-input"
-                                    onKeyPress={this.onKeyPressPeerBox}></input>
+                                <div className="text-gray-400 italic py-1">
+                                    <p>Your Id:</p>
+                                    <p>{this.state.peerId}</p>
+                                </div>
+                                <div className="text-gray-400 italic ml-3 w-2/6">
+                                    <p>Connected to:</p>
+                                    <input className="mt-1 p-1 border w-full" placeholder="Peer's Id" id="peer-input"
+                                        onKeyPress={this.onKeyPressPeerBox}></input>
+                                </div>
                             </div>
                         </div>
                     </div>
