@@ -99,7 +99,7 @@ export default class ChatBox extends React.Component {
     }
 
     componentDidMount() {
-        debugger
+        // debugger
         this.peer = new Peer()
         this.peer.on('open', (id) => { this.setState({ peerId: id }) })
         this.peer.on('connection', this.receiveConnection)
