@@ -1,12 +1,14 @@
 import React from 'react'
 import Peer from 'peerjs'
+import ChatClient from '../utils/chatClient'
 
 export default class ChatBox extends React.Component {
     constructor(props) {
         super(props)
 
         var messages = this.getMessageHistory(props.peerId)
-
+        var chatCleint = new ChatClient("Anurag Regmi", "a@b.c")
+        this.chatClient = chatCleint
 
         this.peer = null
         this.connection = null
@@ -97,6 +99,7 @@ export default class ChatBox extends React.Component {
     }
 
     componentDidMount() {
+        debugger
         this.peer = new Peer()
         this.peer.on('open', (id) => { this.setState({ peerId: id }) })
         this.peer.on('connection', this.receiveConnection)
