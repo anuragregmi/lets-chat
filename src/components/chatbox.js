@@ -1,5 +1,4 @@
 import React from 'react'
-import Peer from 'peerjs'
 import ChatClient from '../utils/chatClient'
 
 export default class ChatBox extends React.Component {
@@ -7,11 +6,9 @@ export default class ChatBox extends React.Component {
         super(props)
 
         var messages = this.getMessageHistory(props.peerId)
-        var chatCleint = new ChatClient("Anurag Regmi", "a@b.c")
-        this.chatClient = chatCleint
+        this.chatClient = null
 
-        this.peer = null
-        this.connection = null
+        this.currentPeer = null
         this.state = {
             peerId: props.peerId ? props.peerId : 'N/A',
             messages: messages
@@ -20,8 +17,6 @@ export default class ChatBox extends React.Component {
         // bind event listeners
         this.onKeyPressPeerBox = this.onKeyPressPeerBox.bind(this)
         this.onKeyPressSendMessageBox = this.onKeyPressSendMessageBox.bind(this)
-        this.receiveConnection = this.receiveConnection.bind(this)
-        this.receiveMessage = this.receiveMessage.bind(this)
     }
 
     getMessageHistory(peerId) {
@@ -36,7 +31,9 @@ export default class ChatBox extends React.Component {
                 alert("Not connected to server yet. Please wait.")
                 return
             }
-            this.connectPeer(e.target.value)
+            let peerId = e.target.value
+            e.target.value = "connecting..."
+            this.connectPeer(peerId)
         }
 
     }
@@ -45,64 +42,44 @@ export default class ChatBox extends React.Component {
         var code = (e.keyCode ? e.keyCode : e.which);
         if (code === 13) {
             e.preventDefault();
-            if (!(this.connection && this.connection.peer)) {
-                alert("Not connected to peer yet. Can not send message.")
-                return
-            }
             this.sendMessage(e.target.value)
             e.target.value = ""
         }
     }
 
     setConnectedId(id) {
+        this.currentPeer = id
         document.getElementById("peer-input").value = id
     }
 
     sendMessage(text) {
-        var message = {
-            "text": text,
-            "user": {
-                "profile_picture": "https://source.unsplash.com/vpOeXr5wmR4/600x600",
-            },
-            "self": true
-        }
-        this.connection.send(text)
-        this.setState({ 'messages': this.state.messages.concat([message]) })
-        this.messagesEnd.scrollIntoView({ behavior: "smooth" });
+        this.chatClient.sendMessage(this.currentPeer, text)
 
-    }
-
-    receiveMessage(text) {
-        var message = {
-            "text": text,
-            "user": {
-                "profile_picture": "https://source.unsplash.com/otT2199XwI8/600x600",
-            },
-            "self": false
-        }
-        this.setState({ 'messages': this.state.messages.concat([message]) })
-        this.messagesEnd.scrollIntoView({ behavior: "smooth" });
     }
 
     connectPeer(peerId) {
-        var conn = this.peer.connect(peerId)
-        conn.on('error', (error) => { alert(error.type) })
-        conn.on('open', () => {
-            this.connection = conn
-            conn.on('data', this.receiveMessage)
-        })
-    }
-    receiveConnection(conn) {
-        this.setConnectedId(conn.peer)
-        this.connection = conn
-        conn.on('data', this.receiveMessage)
+        this.chatClient.connectToPeer(peerId)
     }
 
     componentDidMount() {
-        // debugger
-        this.peer = new Peer()
-        this.peer.on('open', (id) => { this.setState({ peerId: id }) })
-        this.peer.on('connection', this.receiveConnection)
+
+        this.chatClient = new ChatClient()
+        this.chatClient.on('open', (id) => this.setState({ peerId: id }))
+        this.chatClient.on('connection', (peer) => this.setConnectedId(peer))
+        this.chatClient.on('peer-connected', (peer) => this.setConnectedId(peer))
+        this.chatClient.on('receive', (id, message) => {
+            console.log(this.chatClient.messages)
+            this.setState({ messages: this.chatClient.messages[id]})
+            this.messagesEnd.scrollIntoView({ behavior: "smooth" });
+
+        })
+        this.chatClient.on('send', (id, message) => {
+            this.setState({ messages: this.chatClient.messages[id]})
+            this.messagesEnd.scrollIntoView({ behavior: "smooth" });
+
+        })
+        this.chatClient.connect()
+
     }
 
     render() {

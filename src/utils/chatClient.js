@@ -17,6 +17,7 @@ export default class ChatClient {
         this.onEventReceiveConnection = null
         this.onEventConnectionOpen = null
         this.onEventPeerConnected = null
+        this.onEventError = null
 
         this.receiveConnection = this.receiveConnection.bind(this)
         this.receiveMessage = this.receiveMessage.bind(this)
@@ -37,7 +38,10 @@ export default class ChatClient {
                 this.onEventConnectionOpen = handler
                 break
             case 'peer-connected':
-                this.onEventPeerConnected = handler                
+                this.onEventPeerConnected = handler
+                break
+            case 'error':
+                this.onEventError = handler               
 
         }
     }
@@ -50,36 +54,42 @@ export default class ChatClient {
         }
         connection.on('data', (data) => this.receiveMessage(connection, data))
         if (this.onEventReceiveConnection) {
-            this.onEventReceiveConnection(connection)
+            this.onEventReceiveConnection(connection.peer)
         }
         
     }
 
     receiveMessage(connection, message) {
-        this.messages[connection.peer].push({
+        this.messages[connection.peer] = this.messages[connection.peer].concat([{
             "text": message,
             "user": this.userDB[connection.peer],
             "self": false
-        })
+        }])
+
         if (this.onEventReceiveMessage) {
-            this.onEventReceiveMessage(connection, message)
+            console.log("recvf message")
+            this.onEventReceiveMessage(connection.peer, message)
         }
     }
 
     sendMessage(peerId, message) {
-        if (this.activeConnections[peerId]) {
-            let connection = this.activeConnections[peerId]
+        let connection = this.activeConnections[peerId]
+        if (connection) {
             connection.send(message)
-            this.messages[connection.peer].push({
+            this.messages[connection.peer] = this.messages[connection.peer].concat([{
                 "text": message,
                 "user": this.userDB[connection.peer],
                 "self": true
-            })
+            }])
+            console.log("updated to")
+            console.log(this.messages)
             if (this.onEventSendMessage) {
-                this.onEventSendMessage()
+                this.onEventSendMessage(peerId, message)
             }
         }
-        // raise error
+        else {
+            alert("not connected")
+        }
     }
 
     connect() {
@@ -95,8 +105,9 @@ export default class ChatClient {
                 "full_name": this.name,
                 "profile_picture": "https://source.unsplash.com/otT2199XwI8/600x600"
             }
-            if (this.onConnectionOpen) {
-                this.onConnectionOpen(this.peer)
+            console.log(this.onEventConnectionOpen)
+            if (this.onEventConnectionOpen) {
+                this.onEventConnectionOpen(id)
             }
         })
         this.peer.on('connection', this.receiveConnection)
@@ -116,7 +127,7 @@ export default class ChatClient {
             }
             connection.on('data', data => this.receiveMessage(connection, data))
             if (this.onEventPeerConnected) {
-                this.onEventPeerConnected(connection)
+                this.onEventPeerConnected(peerId)
             }
         })
         
