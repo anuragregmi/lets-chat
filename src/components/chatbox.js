@@ -54,7 +54,6 @@ export default class ChatBox extends React.Component {
             const peerId = e.target.value
             e.target.value = "connecting..."
             this.connectPeer(peerId)
-            alert(this.state.peerIdInput)
         }
 
     }
@@ -92,13 +91,11 @@ export default class ChatBox extends React.Component {
     }
 
     setConnectedId(id) {
-        console.log(this,this.chatClient.userDB)
-        this.setState({currentPeer: id, activeUsers: this.chatClient.userDB})
+        this.setState({currentPeer: id, activeUsers: this.chatClient.userDB, messages: this.chatClient.messages[id]})
     }
 
     sendMessage(text) {
         this.chatClient.sendMessage(this.state.currentPeer, text)
-
     }
 
     connectPeer(peerId, fullName) {
@@ -124,13 +121,13 @@ export default class ChatBox extends React.Component {
         this.chatClient.on('peer-connected', (peer) => this.setConnectedId(peer))
         this.chatClient.on('receive', (id, message) => {
             console.log(this.chatClient.messages)
-            this.setState({ messages: this.chatClient.messages[id]})
-            this.messagesEnd.scrollIntoView({ behavior: "smooth" });
+            this.setState({ currentPeer: id, messages: this.chatClient.messages[id]})
+            document.querySelector("#messageEnd").scrollIntoView({ behavior: "smooth" });
 
         })
         this.chatClient.on('send', (id, message) => {
             this.setState({ messages: this.chatClient.messages[id]})
-            this.messagesEnd.scrollIntoView({ behavior: "smooth" });
+            document.querySelector("#messageEnd").scrollIntoView({ behavior: "smooth" });
 
         })
         this.chatClient.connect()
@@ -225,10 +222,10 @@ export default class ChatBox extends React.Component {
                             {
                                Object.keys(this.state.activeUsers).map((key)=>{
                                    let user = this.state.activeUsers[key]
-                                   console.log(user.self)
                                    return !user.self ?<button
                                         className={`flex flex-row items-center ${key === this.state.currentPeer? 'bg-gray-200': 'hover:bg-gray-100'} } rounded-xl p-2`}
                                         key={key}
+                                        onClick={()=> this.setConnectedId(key)}
                                     >
                                         <div
                                             className="flex items-center justify-center h-8 w-8 bg-gray-200 rounded-full"
@@ -295,7 +292,7 @@ export default class ChatBox extends React.Component {
                                         )
                                     }
                                     <div style={{ float: "left", clear: "both" }}
-                                        ref={(el) => { this.messagesEnd = el; }}>
+                                        id="messageEnd">
                                     </div>
                                 </div>
                             </div>
