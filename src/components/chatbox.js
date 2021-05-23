@@ -1,5 +1,6 @@
 import React from 'react'
 import ChatClient from '../utils/chatClient'
+import Modal from './modal'
 
 export default class ChatBox extends React.Component {
     constructor(props) {
@@ -14,13 +15,28 @@ export default class ChatBox extends React.Component {
             messages: messages,
             currentPeer: null,
             fullName: window.localStorage.getItem('fullName'),
-            activeUsers: {}
+            activeUsers: {},
+
+
+            peerIdInput: '',
+            peerNameInput: '',
         }
 
         // bind event listeners
         this.onKeyPressPeerBox = this.onKeyPressPeerBox.bind(this)
         this.onKeyPressSendMessageBox = this.onKeyPressSendMessageBox.bind(this)
         this.onSendMessageButtonClick = this.onSendMessageButtonClick.bind(this)
+        this.onChangePeerId = this.onChangePeerId.bind(this)
+        this.onChangePeerName = this.onChangePeerName.bind(this)
+        this.validatePeerInput = this.validatePeerInput.bind(this)
+        this.onSaveAddUser = this.onSaveAddUser.bind(this)
+    }
+
+    onChangePeerId(e) {
+        this.setState({peerIdInput: e.target.value})
+    }
+    onChangePeerName(e) {
+        this.setState({peerNameInput: e.target.value})
     }
 
     getMessageHistory(peerId) {
@@ -38,8 +54,27 @@ export default class ChatBox extends React.Component {
             const peerId = e.target.value
             e.target.value = "connecting..."
             this.connectPeer(peerId)
+            alert(this.state.peerIdInput)
         }
 
+    }
+
+    validatePeerInput() {
+        if (!this.state.peerId | this.state.peerId === 'N/A') {
+            alert("Not connected to server yet. Please wait.")
+            return false
+        }
+        if (!this.state.peerIdInput || !this.state.peerNameInput) {
+            alert("Both Name and Id is required")
+            return false
+        }
+
+        return true
+
+    }
+
+    onSaveAddUser() {
+        this.connectPeer(this.state.peerIdInput, this.state.peerNameInput)
     }
 
     onKeyPressSendMessageBox(e) {
@@ -59,7 +94,6 @@ export default class ChatBox extends React.Component {
     setConnectedId(id) {
         console.log(this,this.chatClient.userDB)
         this.setState({currentPeer: id, activeUsers: this.chatClient.userDB})
-        document.getElementById("peer-input").value = id
     }
 
     sendMessage(text) {
@@ -67,8 +101,8 @@ export default class ChatBox extends React.Component {
 
     }
 
-    connectPeer(peerId) {
-        this.chatClient.connectToPeer(peerId)
+    connectPeer(peerId, fullName) {
+        this.chatClient.connectToPeer(peerId, fullName)
     }
 
     componentDidMount() {
@@ -156,11 +190,25 @@ export default class ChatBox extends React.Component {
                                     <p><b>Your Id</b></p>
                                     <p>{this.state.peerId}</p>
                         </div>
-                        <div className="flex flex-col items-center mt-3">
-                                    <p>Connected to</p>
-                                    <input className="mt-1 p-1 border w-full" placeholder="Peer's Id" id="peer-input"
-                                        onKeyPress={this.onKeyPressPeerBox}></input>
+                        
+                        
+                        <Modal
+                            title="Add friend"
+                            buttonText="Add user"
+                            validate={this.validatePeerInput}
+                            onSuccess={this.onSaveAddUser}
+                        >
+                        <div className="flex flex-col items-center mt-3 p-3">
+                            <input className="mt-1 p-1 border w-full" placeholder="Peer's Id" id="peer-input"
+                                value={this.state.peerIdInput}
+                                onChange={this.onChangePeerId}    
+                            ></input>
+                            <input className="mt-1 p-1 border w-full" placeholder="Peer's Name" id="peer-name"
+                                value={this.state.peerNameInput}
+                                onChange={this.onChangePeerName}    
+                            ></input>
                         </div>
+                        </Modal>
                     </div>
                     {/* End Avatar Section */}
                     {/* Active Conversations */}

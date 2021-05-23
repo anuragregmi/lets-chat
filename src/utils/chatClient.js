@@ -125,7 +125,7 @@ export default class ChatClient {
         this.peer.on('connection', this.receiveConnection)
     }
 
-    connectToPeer(peerId) {
+    connectToPeer(peerId, fullName="Friend") {
         if (!this.peer){
             throw "Client not connected."
         }
@@ -133,7 +133,7 @@ export default class ChatClient {
         connection.on('open', () => {
             this.activeConnections[peerId] = connection
             this.userDB[peerId] = {
-                "full_name": "Friend",
+                "full_name": fullName,
                 "profile_picture": "https://source.unsplash.com/vpOeXr5wmR4/600x600",
             }
             connection.on('data', data => this.receiveMessage(connection, data))
