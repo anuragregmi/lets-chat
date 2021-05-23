@@ -76,7 +76,6 @@ export default class ChatClient {
         }])
 
         if (this.onEventReceiveMessage) {
-            console.log("recvf message")
             this.onEventReceiveMessage(connection.peer, message)
         }
     }
@@ -87,7 +86,7 @@ export default class ChatClient {
             connection.send(message)
             this.messages[connection.peer] = this.messages[connection.peer].concat([{
                 "text": message,
-                "user": this.userDB[connection.peer],
+                "user": this.userDB[peerId],
                 "self": true
             }])
             console.log("updated to")
@@ -107,6 +106,7 @@ export default class ChatClient {
             this.peer = new Peer(this.peerId, {host: '/', port: 3000, path: '/myapp'})
         }
         else {
+            console.log("connecting with new id")
             this.peer = new Peer({host: '/', port: 3000, path: '/myapp'})
         }
         this.peer.on('open', (id) => {
@@ -123,6 +123,7 @@ export default class ChatClient {
             }
         })
         this.peer.on('connection', this.receiveConnection)
+        this.peer.on('error', err => console.error(err))
     }
 
     connectToPeer(peerId, fullName="Friend") {
